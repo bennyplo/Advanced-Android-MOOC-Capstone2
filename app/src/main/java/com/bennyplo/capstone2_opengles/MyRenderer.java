@@ -14,14 +14,17 @@ public class MyRenderer implements GLSurfaceView.Renderer{
     private final float[] mViewMatrix = new float[16];//view matrix
     private final float[] mMVMatrix=new float[16];//model view matrix
     private final float[] mModelMatrix=new float[16];//model  matrix
-    private FloorPlan mtriangle;
+    private FloorPlan mfloorPlan;
+    private float mYAngle=0;
+    private float mXAngle=0;
+    private float mZAngle=0;
     private int plotdata[]={1539,1531,1547,1539,1543,1531,1575,1591,1543,1539,1523,1539,1543,1539,1859,2587,1455,1539,1523,1527,1543,1587,1619,1635,1655,1659,1639,1639,1579,1547,1527,1527,1547,1543,1551,1547,1547,1563,1539,1527,1523,1543,1539,1575,1599,1555,1531,1539,1551,1547,1487,1995,2331,1563,1539,1523,1563,1559,1591,1615,1635,1659,1651,1675,1631,1567,1531,1519,1527,1511,1531,1527,1539,1539,1527,1539,1543,1547,1547,1571,1603,1571,1539,1551,1547,1559,1487,1927,2475,1491,1531,1503,1551,1559,1571,1599,1623,1663,1659,1659,1615,1547,1519,1519,1511,1523,1539,1543,1551,1567,1563,1551,1555,1547,1587,1579,1567,1559,1539,1559,1555,1563};
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         // Set the background frame color to black
         GLES32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        mtriangle=new FloorPlan();
+        mfloorPlan=new FloorPlan();
     }
     public static void checkGlError(String glOperation) {
         int error;
@@ -43,11 +46,12 @@ public class MyRenderer implements GLSurfaceView.Renderer{
         GLES32.glViewport(0, 0, width, height);
         float ratio = (float) width / height;
         float left=-ratio,right=ratio;
-        Matrix.frustumM(mProjectionMatrix, 0, left,right, -1.0f, 1.0f, 1.0f, 8.0f);
+        Matrix.frustumM(mProjectionMatrix, 0, left,right, -1.0f, 1.0f, 0.5f, 8.0f);
     }
 
     @Override
     public void onDrawFrame(GL10 unused) {
+        float[] mRotationMatrix_x = new float[16];
         float[] mRotationMatrix_y = new float[16];
         float[] mRotationMatrix_z = new float[16];
 
@@ -65,16 +69,21 @@ public class MyRenderer implements GLSurfaceView.Renderer{
                 0f, 0f, 0f,//looks at the origin
                 0f, 1f, 0.0f);//head is down (set to (0,1,0) to look from the top)
         Matrix.translateM(mModelMatrix,0,0.0f,0.0f,-5f);//move backward for 5 units
-        Matrix.setRotateM(mRotationMatrix_z, 0, 0, 0,  0f, 1);//rotate around the z-axis
-        Matrix.setRotateM(mRotationMatrix_y, 0, 0, 0f, 1f, 0);//rotate around the y-axis
-        Matrix.multiplyMM(mModelMatrix, 0, mModelMatrix, 0, mRotationMatrix_z, 0);
+        Matrix.setRotateM(mRotationMatrix_y, 0, mYAngle, 0, 1.0f, 0);//rotate around the y-axis
+        Matrix.setRotateM(mRotationMatrix_x, 0, mXAngle, 1.0f, 0, 0);//rotate around the x-axis
+        Matrix.setRotateM(mRotationMatrix_z, 0, mZAngle, 0f, 0, 1);//rotate around the x-axis
         Matrix.multiplyMM(mModelMatrix, 0, mModelMatrix, 0, mRotationMatrix_y, 0);
+        Matrix.multiplyMM(mModelMatrix, 0, mModelMatrix, 0, mRotationMatrix_x, 0);
+        Matrix.multiplyMM(mModelMatrix, 0, mModelMatrix, 0, mRotationMatrix_z, 0);
 
         // Calculate the projection and view transformation
         //calculate the model view matrix
         Matrix.multiplyMM(mMVMatrix,0,mViewMatrix,0,mModelMatrix,0);
         Matrix.multiplyMM(mMVPMatrix,0,mProjectionMatrix,0,mMVMatrix,0);
 
-        mtriangle.draw(mMVPMatrix);
+        mfloorPlan.draw(mMVPMatrix);
     }
+    public void setYAngle(float angle) { mYAngle = angle; }
+    public void setXAngle(float angle){mXAngle=angle;}
+    public void setZAngle(float angle){mZAngle=angle;}
 }
